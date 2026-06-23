@@ -6,8 +6,11 @@ Homebrew tap for `wix`.
 
 ```bash
 brew tap u8i9o/wix
+brew trust u8i9o/wix
 brew install --cask wix
 ```
+
+처음 한 번은 `brew trust`로 탭을 신뢰해야 합니다.
 
 ## Current release
 
