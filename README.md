@@ -6,15 +6,14 @@ Homebrew tap for `wix`.
 
 ```bash
 brew tap u8i9o/wix
-brew trust u8i9o/wix
 brew install --cask wix
 ```
 
-처음 한 번은 `brew trust`로 탭을 신뢰해야 합니다.
+이 tap은 공개 릴리스 ZIP를 내려받는 방식입니다.
 
 ## Current release
 
-- `desktop-v0.1.6`
+- `v0.1.6`
 - `wix-0.1.6-arm64.zip`
 
 ## Notes
