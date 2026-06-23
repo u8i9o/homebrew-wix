@@ -1,0 +1,94 @@
+name: update-cask
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, e.g. v0.1.7"
+        required: true
+      asset_name:
+        description: "Release asset name, e.g. wix-0.1.7-arm64.zip"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tap repo
+        uses: actions/checkout@v4
+
+      - name: Resolve release inputs
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_INPUT: ${{ github.event.inputs.tag }}
+          ASSET_INPUT: ${{ github.event.inputs.asset_name }}
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+            ASSET_NAME="$(gh release view "$TAG" --repo "${{ github.repository }}" --json assets --jq '.assets[] | select(.name | endswith(".zip")) | .name' | head -n 1)"
+          else
+            TAG="$TAG_INPUT"
+            ASSET_NAME="$ASSET_INPUT"
+          fi
+
+          if [ -z "$TAG" ] || [ -z "$ASSET_NAME" ]; then
+            echo "Could not determine release tag or asset name"
+            exit 1
+          fi
+
+          ZIP_PATH="/tmp/$ASSET_NAME"
+          gh release download "$TAG" --repo "${{ github.repository }}" --pattern "$ASSET_NAME" --dir /tmp
+          SHA256="$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')"
+
+          VERSION="${TAG#v}"
+
+          {
+            echo "tag=$TAG"
+            echo "asset_name=$ASSET_NAME"
+            echo "zip_path=$ZIP_PATH"
+            echo "sha256=$SHA256"
+            echo "version=$VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update cask
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ASSET_NAME: ${{ steps.meta.outputs.asset_name }}
+          SHA256: ${{ steps.meta.outputs.sha256 }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          path = Path("Casks/wix.rb")
+          text = path.read_text()
+          text = re.sub(r'version ".*?"', f'version "{os.environ["VERSION"]}"', text, count=1)
+          text = re.sub(r'sha256 ".*?"', f'sha256 "{os.environ["SHA256"]}"', text, count=1)
+          text = re.sub(
+              r'url ".*?"',
+              f'url "https://github.com/u8i9o/homebrew-wix/releases/download/{os.environ["TAG"]}/{os.environ["ASSET_NAME"]}"',
+              text,
+              count=1,
+          )
+          path.write_text(text)
+          PY
+
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/wix.rb
+          if git diff --cached --quiet; then
+            echo "No cask changes"
+            exit 0
+          fi
+          git commit -m "Update wix cask to ${{ steps.meta.outputs.version }}"
+          git push origin main

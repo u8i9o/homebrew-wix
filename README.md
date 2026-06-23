@@ -19,4 +19,5 @@ brew install --cask wix
 ## Notes
 
 - This tap installs the macOS app from GitHub Releases.
-- When a new release ships, update `Casks/wix.rb` with the new version, URL, and SHA256.
+- When a new release is published in this tap repository, the cask updates automatically.
+- For manual updates, use the `workflow_dispatch` input on `.github/workflows/update-cask.yml`.
