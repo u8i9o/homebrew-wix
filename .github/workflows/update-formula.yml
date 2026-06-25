@@ -1,4 +1,4 @@
-name: update-cask
+name: update-formula
 
 on:
   release:
@@ -56,9 +56,8 @@ jobs:
             echo "version=$VERSION"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Update cask
+      - name: Update formula
         env:
-          TAG: ${{ steps.meta.outputs.tag }}
           VERSION: ${{ steps.meta.outputs.version }}
           ASSET_NAME: ${{ steps.meta.outputs.asset_name }}
           SHA256: ${{ steps.meta.outputs.sha256 }}
@@ -68,16 +67,11 @@ jobs:
           import os
           import re
 
-          path = Path("Casks/wix.rb")
+          path = Path("Formula/wix.rb")
           text = path.read_text()
-          text = re.sub(r'version ".*?"', f'version "{os.environ["VERSION"]}"', text, count=1)
+          text = re.sub(r'url ".*?"', f'url "https://github.com/u8i9o/homebrew-wix/releases/download/v{os.environ["VERSION"]}/{os.environ["ASSET_NAME"]}"', text, count=1)
           text = re.sub(r'sha256 ".*?"', f'sha256 "{os.environ["SHA256"]}"', text, count=1)
-          text = re.sub(
-              r'url ".*?"',
-              f'url "https://github.com/u8i9o/homebrew-wix/releases/download/{os.environ["TAG"]}/{os.environ["ASSET_NAME"]}"',
-              text,
-              count=1,
-          )
+          text = re.sub(r'version ".*?"', f'version "{os.environ["VERSION"]}"', text, count=1)
           path.write_text(text)
           PY
 
@@ -85,10 +79,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Casks/wix.rb
+          git add Formula/wix.rb
           if git diff --cached --quiet; then
-            echo "No cask changes"
+            echo "No formula changes"
             exit 0
           fi
-          git commit -m "Update wix cask to ${{ steps.meta.outputs.version }}"
+          git commit -m "Update wix formula to ${{ steps.meta.outputs.version }}"
           git push origin main

@@ -6,18 +6,26 @@ Homebrew tap for `wix`.
 
 ```bash
 brew tap u8i9o/wix
-brew install --cask wix
+brew install wix
 ```
 
-이 tap은 공개 릴리스 ZIP를 내려받는 방식입니다.
+If Homebrew asks to trust the tap, run:
+
+```bash
+brew trust u8i9o/wix
+```
+
+## What it does
+
+- Downloads the public release ZIP from this tap repository.
+- Installs `wix.app` under Homebrew-managed paths.
+- Adds a `wix` command that launches the app.
 
 ## Current release
 
 - `v0.1.6`
-- `wix-0.1.6-arm64.zip`
 
-## Notes
+## Update flow
 
-- This tap installs the macOS app from GitHub Releases.
-- When a new release is published in this tap repository, the cask updates automatically.
-- For manual updates, use the `workflow_dispatch` input on `.github/workflows/update-cask.yml`.
+When a new release is published to this tap repository, the formula updates automatically.
+If needed, you can also run `.github/workflows/update-formula.yml` manually.
