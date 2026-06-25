@@ -7,7 +7,10 @@ class Wix < Formula
   depends_on arch: :arm64
 
   def install
-    libexec.install "wix.app"
+    app_bundle = Dir["**/wix.app"].first
+    odie "wix.app not found in the release archive" unless app_bundle
+
+    libexec.install app_bundle
 
     (bin/"wix").write <<~EOS
       #!/bin/bash
