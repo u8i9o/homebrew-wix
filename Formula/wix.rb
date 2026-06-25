@@ -8,6 +8,11 @@ class Wix < Formula
 
   def install
     app_bundle = Dir["**/wix.app"].first
+    unless app_bundle
+      system "/usr/bin/unzip", "-q", cached_download.to_s, "-d", buildpath
+      app_bundle = Dir["**/wix.app"].first
+    end
+
     odie "wix.app not found in the release archive" unless app_bundle
 
     libexec.install app_bundle
